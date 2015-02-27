@@ -1,0 +1,43 @@
+#!/bin/bash
+# this script simulates "zombie" screenrc command
+
+USAGE=0
+
+if [ $# -lt 2 ]; then
+    echo Usage: $0 [keys] [command [args]]
+    USAGE=1
+fi
+
+if [ ${#1} -ne 2 ]; then
+    echo [keys] must contain two characters.
+    echo Pressing the first key after the process terminates will end the script.
+    echo Pressing the second key after the process terminates will restart the process.
+    USAGE=1
+fi;
+
+if [ "$USAGE" = 1 ]; then
+    exit
+fi;
+
+stty -ctlecho
+trap ' ' INT
+
+KEYS="$1"
+KEY_CLOSE=${KEYS:0:1} # 'r'
+KEY_RESTART=${KEYS:1:2} # 'q'
+
+shift # to remove the first element because it was used for KEYS
+
+LOOP=1
+
+while [ "$LOOP" = 1 ]; do
+    "${@}"
+    echo "=== Command terminated $(date) ==="
+    char=''
+    while [ "$char" != "${KEY_CLOSE}" -a "$char" != "${KEY_RESTART}" ]; do
+        read -s -n 1 char
+    done
+    if [ "$char" = "${KEY_CLOSE}" ]; then
+        LOOP=0 # break out of the loop
+    fi
+done
